@@ -1,0 +1,2920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ 角色生成器 ✨</title>
+    
+    <style>
+      :root {
+        /* 主要颜色 - 将由JavaScript根据世界背景动态设置 */
+        --primary-color: #313a3d;
+        --primary-dark: #2a3235;
+        --primary-darker: #212a2d;
+        --secondary-color: #ebd7d7;
+
+        /* 面板颜色 */
+        --panel-bg: #313a3d;
+        --panel-bg-opacity: 0.9;
+
+        /* 功能颜色 */
+        --success-color: #4ade80;
+        --error-color: #f87171;
+        --muted-color: #a1a1aa;
+        --accent-color: #c084fc;
+
+        /* 自动计算的透明度颜色 */
+        --primary-opacity-10: rgba(49, 58, 61, 0.1);
+        --primary-opacity-20: rgba(49, 58, 61, 0.2);
+        --primary-opacity-30: rgba(49, 58, 61, 0.3);
+        --primary-opacity-40: rgba(49, 58, 61, 0.4);
+        --primary-opacity-50: rgba(49, 58, 61, 0.5);
+        --secondary-opacity-20: rgba(235, 215, 215, 0.2);
+        --secondary-opacity-30: rgba(235, 215, 215, 0.3);
+        --secondary-opacity-40: rgba(235, 215, 215, 0.4);
+
+        /* 渐变色定义 */
+        --background-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 50%, var(--primary-darker) 100%);
+      }
+
+      /* ================= 全局样式 ================= */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        background: var(--background-gradient);
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+        padding: 20px;
+        color: var(--secondary-color);
+      }
+
+      /* 隐藏类 */
+      .hidden {
+        display: none !important;
+      }
+
+      /* ================= 世界选择页面样式 ================= */
+      .bg-decoration {
+        position: fixed;
+        font-size: 20px;
+        opacity: 0.6;
+        animation: float 3s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .bg-decoration:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+      .bg-decoration:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.5s; }
+      .bg-decoration:nth-child(3) { top: 60%; left: 8%; animation-delay: 1s; }
+      .bg-decoration:nth-child(4) { bottom: 20%; right: 12%; animation-delay: 1.5s; }
+      .bg-decoration:nth-child(5) { bottom: 30%; left: 20%; animation-delay: 2s; }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+        50% { transform: translateY(-20px) rotate(5deg); opacity: 0.8; }
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 10;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 50px;
+      }
+
+      .title {
+        font-size: 48px;
+        font-weight: bold;
+        background: linear-gradient(45deg, #fff, #f8f9fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .worlds-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .world-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .world-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--world-gradient);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: -1;
+      }
+
+      .world-card:hover {
+        transform: translateY(-10px);
+        border-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      .world-card:hover::before {
+        opacity: 0.8;
+      }
+
+      .world-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        display: block;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+      }
+
+      .world-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 15px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .world-description {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.5;
+        margin-bottom: 20px;
+      }
+
+      .select-btn {
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 25px;
+        padding: 12px 30px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .select-btn:hover {
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: scale(1.05);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .footer-text {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .back-btn {
+        position: fixed;
+        top: 30px;
+        left: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 10px 20px;
+        color: #fff;
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        z-index: 100;
+        cursor: pointer;
+        border: none;
+      }
+
+      .back-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(-5px);
+      }
+
+      /* ================= 角色生成器页面样式 ================= */
+      .main-panel {
+        background: rgba(49, 58, 61, var(--panel-bg-opacity));
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px var(--primary-opacity-30);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--secondary-opacity-20);
+      }
+
+      .form-section {
+        margin-bottom: 40px;
+        padding: 25px;
+        border-radius: 15px;
+        background: var(--primary-opacity-10);
+        border: 1px solid var(--secondary-opacity-20);
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .form-label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        color: var(--secondary-color);
+        gap: 8px;
+      }
+
+      .form-input, .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--secondary-color);
+        border-radius: 8px;
+        background: rgba(49, 58, 61, 0.8);
+        color: var(--secondary-color);
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #fff;
+        box-shadow: 0 0 10px var(--secondary-opacity-30);
+        background: rgba(49, 58, 61, 0.9);
+      }
+
+      .action-btn {
+        padding: 12px 24px;
+        border: 2px solid var(--secondary-color);
+        border-radius: 25px;
+        background: transparent;
+        color: var(--secondary-color);
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .action-btn:hover {
+        background: var(--secondary-color);
+        color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--secondary-opacity-30);
+      }
+
+      .action-btn.primary {
+        background: var(--secondary-color);
+        color: var(--primary-color);
+      }
+
+      .action-btn.primary:hover {
+        background: #fff;
+        transform: translateY(-2px) scale(1.05);
+      }
+
+      /* 选项按钮样式 */
+      .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .option-btn {
+        padding: 12px 16px;
+        border: 2px solid var(--secondary-opacity-30);
+        border-radius: 10px;
+        background: rgba(49, 58, 61, 0.6);
+        color: var(--secondary-color);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 45px;
+      }
+
+      .option-btn:hover {
+        border-color: var(--secondary-color);
+        background: rgba(49, 58, 61, 0.8);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--primary-opacity-20);
+      }
+
+      .option-btn.selected {
+        border-color: var(--secondary-color);
+        background: var(--secondary-opacity-20);
+        color: #fff;
+        font-weight: bold;
+      }
+
+      .option-btn.custom-option {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        border: 2px solid #ff4757;
+        position: relative;
+        color: white;
+      }
+
+      .option-btn.custom-option:after {
+        content: "✨";
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        font-size: 12px;
+        background: #fff;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ff4757;
+      }
+
+      .option-btn.custom-option.selected {
+        background: linear-gradient(135deg, #ff4757, #c44569);
+        border-color: #ff4757;
+        color: white;
+        font-weight: bold;
+      }
+
+      /* 折叠区域样式 */
+      .collapsible-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: var(--primary-opacity-20);
+        border-radius: 10px;
+        cursor: pointer;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .collapsible-header:hover {
+        background: var(--primary-opacity-30);
+      }
+
+      .collapsible-content {
+        max-height: none;
+        overflow: visible;
+        transition: all 0.3s ease;
+        opacity: 1;
+      }
+
+      .collapsible-content.collapsed {
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      .expand-icon {
+        transition: transform 0.3s ease;
+      }
+
+      .collapsed .expand-icon {
+        transform: rotate(-90deg);
+      }
+
+      .selected-items {
+        margin: 10px 0;
+        padding: 10px;
+        background: var(--primary-opacity-10);
+        border-radius: 8px;
+        min-height: 40px;
+        border: 1px dashed var(--secondary-opacity-30);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .selected-item {
+        background: var(--secondary-opacity-40);
+        color: var(--primary-color);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .remove-item {
+        cursor: pointer;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .remove-item:hover {
+        color: var(--error-color);
+      }
+
+      /* YAML模态窗口样式 */
+      .yaml-modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .yaml-modal-content {
+        background: var(--panel-bg);
+        margin: 5% auto;
+        padding: 0;
+        border: 2px solid var(--secondary-color);
+        border-radius: 20px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow: hidden;
+        box-shadow: 0 0 30px var(--secondary-opacity-30);
+        backdrop-filter: blur(10px);
+      }
+
+      .yaml-modal-header {
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--secondary-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(49, 58, 61, var(--panel-bg-opacity));
+      }
+
+      .yaml-modal-header h2 {
+        margin: 0;
+        color: var(--secondary-color);
+        font-size: 20px;
+        font-weight: bold;
+      }
+
+      .yaml-modal-close {
+        color: var(--secondary-color);
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+        transition: all 0.3s;
+      }
+
+      .yaml-modal-close:hover {
+        color: #fff;
+        transform: scale(1.1);
+      }
+
+      .yaml-modal-body {
+        padding: 20px 25px;
+        background: rgba(49, 58, 61, var(--panel-bg-opacity));
+      }
+
+      #yamlOutput {
+        width: 100%;
+        height: 400px;
+        background: rgba(49, 58, 61, 0.8);
+        border: 1px solid var(--secondary-color);
+        border-radius: 8px;
+        color: var(--secondary-color);
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        padding: 15px;
+        resize: vertical;
+        margin-bottom: 15px;
+        line-height: 1.4;
+      }
+
+      .yaml-modal-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+      }
+
+      .yaml-modal-actions .action-btn {
+        min-width: 150px;
+      }
+
+      /* 世界背景显示样式 */
+      .world-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 2px solid var(--secondary-color);
+        border-radius: 15px;
+        background: rgba(49, 58, 61, 0.3);
+        backdrop-filter: blur(5px);
+      }
+
+      .world-header .world-icon {
+        font-size: 32px;
+        margin-right: 10px;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+      }
+
+      .world-header .world-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--secondary-color);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      /* 顶部操作按钮 */
+      .top-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 768px) {
+        .title {
+          font-size: 36px;
+        }
+
+        .worlds-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .world-card {
+          padding: 20px;
+        }
+
+        .world-icon {
+          font-size: 48px;
+        }
+
+        .world-name {
+          font-size: 20px;
+        }
+
+        .back-btn {
+          top: 20px;
+          left: 20px;
+          padding: 8px 16px;
+          font-size: 14px;
+        }
+
+        .main-panel {
+          padding: 20px;
+        }
+
+        .options-grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 10px;
+        }
+
+        .top-actions {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+
+      /* 装饰星星样式 */
+      .star {
+        position: fixed;
+        font-size: 24px;
+        opacity: 0.7;
+        animation: twinkle 2s ease-in-out infinite alternate;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .star:nth-child(1) { top: 15%; left: 20%; animation-delay: 0s; }
+      .star:nth-child(2) { top: 25%; right: 25%; animation-delay: 0.7s; }
+      .star:nth-child(3) { bottom: 30%; left: 15%; animation-delay: 1.4s; }
+      .star:nth-child(4) { bottom: 40%; right: 20%; animation-delay: 2.1s; }
+
+      @keyframes twinkle {
+        0% { opacity: 0.3; transform: scale(1); }
+        100% { opacity: 0.9; transform: scale(1.1); }
+      }
+
+    </style>
+</head>
+<body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">✨</div>
+    <div class="bg-decoration">⭐</div>
+    <div class="bg-decoration">💫</div>
+    <div class="bg-decoration">🌟</div>
+    <div class="bg-decoration">✨</div>
+
+    <!-- 返回按钮 -->
+    <button id="back-btn" class="back-btn" onclick="goBack()">← 返回</button>
+
+    <!-- 装饰星星 -->
+    <div class="star">✨</div>
+    <div class="star">⭐</div>
+    <div class="star">✨</div>
+    <div class="star">⭐</div>
+
+    <!-- 世界选择视图 -->
+    <div id="world-selection-view">
+        <div class="container">
+            <div class="header">
+                <h1 class="title">✨ 角色生成器 ✨</h1>
+                <p class="subtitle">
+                    选择您想要的世界背景，每个背景都有独特的设定和选项<br>
+                    不同的世界将为您提供不同的角色生成体验
+                </p>
+            </div>
+
+            <div class="worlds-grid" id="worldsGrid">
+                <!-- 世界背景卡片将由JavaScript动态生成 -->
+            </div>
+
+            <div class="footer">
+                <div class="footer-text">
+                    <p style="margin-top: 15px; opacity: 0.6;">
+                        角色生成器 v2.0 - 集成版
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色生成器视图 -->
+    <div id="character-generator-view" class="hidden">
+        <div class="container">
+            <div class="main-panel">
+                <!-- 世界背景显示 -->
+                <div class="world-header" id="worldHeader">
+                    <span class="world-icon" id="worldIcon">🏙️</span>
+                    <span class="world-name" id="worldName">现代都市</span>
+                </div>
+                
+                <h1 class="title" id="pageTitle">✨ 角色生成器 ✨</h1>
+
+                <!-- 顶部快捷按钮 -->
+                <div class="top-actions">
+                    <button class="action-btn" onclick="randomizeAll()">📚 随机生成全部</button>
+                    <button class="action-btn primary" onclick="confirmCreate()">✨ 生成角色数据 ✨</button>
+                    <button class="action-btn" onclick="resetAll()">🔄 重置全部</button>
+                </div>
+
+                <!-- 基本信息表单 -->
+                <div class="form-section" id="basicInfoSection">
+                    <div class="form-group">
+                        <div class="form-label">
+                            姓名 <span style="color: var(--error-color);">*</span>
+                        </div>
+                        <input type="text" class="form-input" id="realName" placeholder="输入角色姓名（必填）" />
+                        <div id="realNameError" style="color: var(--error-color); font-size: 12px; margin-top: 5px; display: none;">请输入姓名，这是必填项</div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label">年龄</div>
+                        <input type="number" class="form-input" id="age" placeholder="输入年龄" min="1" max="200" />
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label">生理性别</div>
+                        <select class="form-select" id="biologicalGender">
+                            <option value="">选择性别</option>
+                            <option value="女">女</option>
+                            <option value="男">男</option>
+                            <option value="扶她">扶她</option>
+                            <option value="双性">双性</option>
+                            <option value="无性">无性</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label">性取向</div>
+                        <select class="form-select" id="sexualOrientation">
+                            <option value="">选择性取向</option>
+                            <option value="异性恋">异性恋</option>
+                            <option value="同性恋">同性恋</option>
+                            <option value="双性恋">双性恋</option>
+                            <option value="泛性恋">泛性恋</option>
+                            <option value="无性恋">无性恋</option>
+                        </select>
+                    </div>
+
+                    <!-- 正面性格特征 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('positiveTraits')">
+                            <div>
+                                <span>正面性格特征</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('positiveTraits')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="positiveTraitsSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开正面性格特征...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="positiveTraitsContent">
+                            <div class="options-grid" id="positiveTraitsGrid">
+                                <!-- 选项将由JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 负面性格特征 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('negativeTraits')">
+                            <div>
+                                <span>负面性格特征</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('negativeTraits')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="negativeTraitsSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开负面性格特征...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="negativeTraitsContent">
+                            <div class="options-grid" id="negativeTraitsGrid">
+                                <!-- 选项将由JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 恋爱观 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('loveViews')">
+                            <div>
+                                <span>恋爱观</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('loveViews')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="loveViewsSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开恋爱观...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="loveViewsContent">
+                            <div class="options-grid" id="loveViewsGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 社交风格 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('socialStyle')">
+                            <div>
+                                <span>社交风格</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('socialStyle')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="socialStyleSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开社交风格...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="socialStyleContent">
+                            <div class="options-grid" id="socialStyleGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 兴趣爱好 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('hobbies')">
+                            <div>
+                                <span>兴趣爱好</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('hobbies')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="hobbiesSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开兴趣爱好...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="hobbiesContent">
+                            <div class="options-grid" id="hobbiesGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 身份职业 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('identity')">
+                            <div>
+                                <span>身份职业</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('identity')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="identitySelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开身份职业...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="identityContent">
+                            <div class="options-grid" id="identityGrid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 外观风格部分 -->
+                <div class="form-section" id="appearanceSection">
+                    <h3 style="color: var(--secondary-color); margin-bottom: 20px; text-align: center;">外观风格</h3>
+
+                    <!-- 身高体重 -->
+                    <div class="form-group">
+                        <div class="form-label">身高体重</div>
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 1;">
+                                <input type="number" class="form-input" id="height" placeholder="身高(cm)" min="100" max="250" />
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="number" class="form-input" id="weight" placeholder="体重(kg)" min="30" max="200" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 面部特征 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('face')">
+                            <div>
+                                <span>面部特征</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('face')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="faceSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开面部特征...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="faceContent">
+                            <div class="options-grid" id="faceGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 身材特征 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('body')">
+                            <div>
+                                <span>身材特征</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('body')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="bodySelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开身材特征...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="bodyContent">
+                            <div class="options-grid" id="bodyGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 穿搭风格 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('dressStyle')">
+                            <div>
+                                <span>穿搭风格</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('dressStyle')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="dressStyleSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开穿搭风格...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="dressStyleContent">
+                            <div class="options-grid" id="dressStyleGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 发型 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('hairstyle')">
+                            <div>
+                                <span>发型</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('hairstyle')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="hairstyleSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开发型...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="hairstyleContent">
+                            <div class="options-grid" id="hairstyleGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 配饰 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('accessories')">
+                            <div>
+                                <span>配饰</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('accessories')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="accessoriesSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开配饰...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="accessoriesContent">
+                            <div class="options-grid" id="accessoriesGrid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 其他特征部分 -->
+                <div class="form-section" id="otherTraitsSection">
+                    <h3 style="color: var(--secondary-color); margin-bottom: 20px; text-align: center;">其他特征</h3>
+
+                    <!-- 健康状况 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('illness')">
+                            <div>
+                                <span>健康状况</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('illness')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="illnessSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开健康状况...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="illnessContent">
+                            <div class="options-grid" id="illnessGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 特殊能力 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('specialTraits')">
+                            <div>
+                                <span>特殊能力</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('specialTraits')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="specialTraitsSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开特殊能力...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="specialTraitsContent">
+                            <div class="options-grid" id="specialTraitsGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 体味 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('bodyScent')">
+                            <div>
+                                <span>体味</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('bodyScent')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="bodyScentSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开体味...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="bodyScentContent">
+                            <div class="options-grid" id="bodyScentGrid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 性相关特征部分 -->
+                <div class="form-section" id="sexualTraitsSection">
+                    <h3 style="color: var(--secondary-color); margin-bottom: 20px; text-align: center;">性相关特征</h3>
+
+                    <!-- 性癖 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('kinks')">
+                            <div>
+                                <span>性癖</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('kinks')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="kinksSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开性癖...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="kinksContent">
+                            <div class="options-grid" id="kinksGrid"></div>
+                        </div>
+                    </div>
+
+                    
+                    <!-- 关系状态 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('relationshipStatus')">
+                            <div>
+                                <span>关系状态</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('relationshipStatus')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="relationshipStatusSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开关系状态...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="relationshipStatusContent">
+                            <div class="options-grid" id="relationshipStatusGrid"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 敏感点 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('sensitiveSpots')">
+                            <div>
+                                <span>敏感点</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('sensitiveSpots')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="sensitiveSpotsSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开敏感点...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="sensitiveSpotsContent">
+                            <div class="options-grid" id="sensitiveSpotsGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 敏感度 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('sensitivity')">
+                            <div>
+                                <span>身体敏感度</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('sensitivity')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="sensitivitySelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开身体敏感度...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="sensitivityContent">
+                            <div class="options-grid" id="sensitivityGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 性欲强度 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('libido')">
+                            <div>
+                                <span>性欲强度</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('libido')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="libidoSelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开性欲强度...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="libidoContent">
+                            <div class="options-grid" id="libidoGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 性经验 -->
+                    <div class="form-group">
+                        <div class="collapsible-header" onclick="toggleCollapse('sexualHistory')">
+                            <div>
+                                <span>性经验</span>
+                                <span class="icon dice-icon" onclick="event.stopPropagation(); showCustomLabelModal('sexualHistory')" style="cursor: pointer; margin-left: 10px;">⚅</span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="selected-items" id="sexualHistorySelected">
+                            <span style="color: var(--muted-color); font-size: 12px;">点击上方展开性经验...</span>
+                        </div>
+                        <div class="collapsible-content collapsed" id="sexualHistoryContent">
+                            <div class="options-grid" id="sexualHistoryGrid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部操作按钮 -->
+                <div class="top-actions">
+                    <button class="action-btn" onclick="showWorldSelection()">🌍 返回世界选择</button>
+                    <button class="action-btn" onclick="randomizeAll()">📚 随机生成全部</button>
+                    <button class="action-btn primary" onclick="confirmCreate()">✨ 生成角色数据 ✨</button>
+                    <button class="action-btn" onclick="resetAll()">🔄 重置全部</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- YAML模态窗口 -->
+    <div id="yamlModal" class="yaml-modal" style="display: none;">
+        <div class="yaml-modal-content">
+            <div class="yaml-modal-header">
+                <h2>角色数据 (YAML格式)</h2>
+                <span class="yaml-modal-close" onclick="closeYamlModal()">&times;</span>
+            </div>
+            <div class="yaml-modal-body">
+                <textarea id="yamlOutput" readonly></textarea>
+                <div class="yaml-modal-actions">
+                    <button id="copyYamlBtn" class="action-btn" onclick="copyYamlToClipboard()">📋 复制YAML</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义标签输入模态窗口 -->
+    <div id="customLabelModal" class="yaml-modal" style="display: none;">
+        <div class="yaml-modal-content">
+            <div class="yaml-modal-header">
+                <h2>添加自定义标签</h2>
+                <span class="yaml-modal-close" onclick="closeCustomLabelModal()">&times;</span>
+            </div>
+            <div class="yaml-modal-body">
+                <p style="margin-bottom: 15px;">为 <strong id="customLabelFieldName"></strong> 添加自定义标签：</p>
+                <input type="text" id="customLabelInput" placeholder="输入自定义标签..." 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px; font-size: 14px;" 
+                       maxlength="50" onkeypress="handleCustomLabelKeyPress(event)" />
+                <div class="yaml-modal-actions">
+                    <button class="action-btn primary" onclick="confirmCustomLabel()">✅ 确认添加</button>
+                    <button class="action-btn" onclick="closeCustomLabelModal()">❌ 取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 外部库引入 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+
+    <!-- 完整的世界配置数据 -->
+    <script>
+// 完整的世界配置数据
+// ===== 完整的worlds-config.js内容 =====
+const WORLDS_CONFIG = {
+  modern: {
+    name: "现代都市",
+    description: "现代都市背景，适合现代生活、都市爱情等主题",
+    icon: "🏙️",
+    color: {
+      primary: "#313a3d",
+      secondary: "#ebd7d7",
+      accent: "#c084fc",
+      background: "linear-gradient(135deg, #313a3d 0%, #2a3235 50%, #212a2d 100%)"
+    },
+    decorations: ["✨", "⭐", "💫", "🌟"],
+    
+    // 现代都市专属配置 - 完整选项组
+    positiveTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '睿智', '温柔', '豁达', '坚守原则', '精神强大', '重情重义', '包容大度', 
+        '彬彬有礼', '深情', '慷慨', '可靠', '有耐心', '专一', '理智', '隐忍', 
+        '沉稳', '冷静', '成熟', '正直', '有毅力', '有担当', '自律', '简朴', 
+        '善于教导', '古灵精怪', '阳光开朗', '主动', '热情', '黏人', '真诚坦率', 
+        '活泼', '单纯', '可爱', '忠诚', '幽默', '勇敢', '善良', '乐观', '仗义', 
+        '有同理心', '富有责任感', '牺牲精神', '目标坚定', '开放', '天真烂漫', '软萌',
+        '时尚潮流', '网络达人', '科技宅', '社交媒体控', '工作狂', '佛系', '精致利己主义'
+      ]
+    },
+
+    negativeTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '情感淡漠', '冷酷', '冷血', '毒舌', '虚伪', '暴虐', '冷嘲热讽', '死板', 
+        '傲娇', '外冷内热', '口是心非', '傲慢', '自恋', '病娇', '叛逆', '别扭', 
+        '玩世不恭', '爱玩乐', '随性', '反骨', '疑心重', '不着调', '懒惰', '轻浮', 
+        '奢靡', '冲动', '占有欲强', '神经质', '黑化', '阴郁', '伪善', '城府深', 
+        '狡猾', '虚荣', '贪婪', '缺乏羞耻心', '厌世', '不择手段', '无底线', 
+        '暴躁', '薄情', '暴力倾向', '恶意揣测', '操控欲强', '妒忌心重', '多疑', 
+        '自毁倾向', '疯癫', '偏执', '情绪不稳定', '敏感脆弱', '迟钝', '社恐', 
+        '冷漠', '愧疚自责', '忧郁', '内向', '不合群', '犹豫不决', '自卑', '幼稚',
+        '拜金', '势利眼', '网络成瘾', '手机依赖', '消费主义', '焦虑症患者', '完美主义'
+      ]
+    },
+
+    loveViews: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '一生只爱一人', '花心渣系', '接受非一对一关系', '接受同时和多人是伴侣关系', 
+        '事业优于爱情', '爱情至上', '享受暧昧关系', '不信任亲密关系', '更重视肉体关系', 
+        '接受多人共享伴侣', '婚姻是交易', '不婚主义', '爱无能', '占有欲极强', 
+        '爱而不自知', '单箭头执着', '保护欲强', '偏执病娇', '把爱情当游戏', '慢热', 
+        '纯真懵懂', '放荡不羁', '忠贞守护', '伪装冷漠实则深情', '对外冷漠只宠一人', 
+        '容易吃醋', '爱自由拒绝束缚', '为爱牺牲一切', '不求回应默默付出', 
+        '拒绝暧昧界限分明', '暴力偏执控制欲', '人间清醒型', '善于利用感情谋算', 
+        '追求轰轰烈烈的爱情', '平凡细水长流型', '与世界为敌也护你周全', 
+        '与其相守不如成全', '爱上便无法回头', '渴望被爱与关心', '追求精神恋爱', 
+        '不主动也不拒绝', '网络恋爱', '异地恋专家', '颜控', '只看内在不看外表',
+        '追求门当户对', '崇拜成功人士', '喜欢年龄差', '恋爱脑', '理性恋爱'
+      ]
+    },
+
+    socialStyle: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '能说会道', '八面玲珑', '社牛天花板', '逗比搞笑', '热情似火', '活泼开朗', 
+        '自来熟', '讨人喜欢', '厚脸皮粘人', '热心肠', '夸张张扬', '高调霸气', 
+        '活力四射感染全场', '天真软萌', '超会撒娇', '小哭包', '呆萌天然呆', 
+        '惹人心疼的小可怜', '人畜无害又软又甜', '伪装天真', '装傻卖萌', '口蜜腹剑', 
+        '笑面虎型', '沉默寡言', '冷漠疏离', '孤僻独行', '安静听众', '礼貌疏远', 
+        '不主动但有回应', '选择性社交', '社恐型', '边缘化习惯性透明', '佛系随缘', 
+        '防备心强', '高冷拒人千里', '爱憎分明', '用行动代替语言', '低调不显山露水', 
+        '暗中观察型', '外热内冷', '外冷内热', '白切黑', '黑切白', '外表张扬内里孤独', 
+        '表面佛系暗地操心', '表面高冷暗中默默守护', '喜怒不形于色但内心澎湃', 
+        '看人下菜碟', '故作轻浮内心深沉', '伪装无害暗藏杀机', '若即若离游走于人群', 
+        '明面圆滑暗中冷血', '看似好说话实则不容侵犯', '随时抽身', '隐藏真实的自己',
+        '网络社交达人', '线上活跃线下沉默', '朋友圈人设管理', '职场社交高手', 
+        '网红气质', '直播达人', '社交媒体重度用户', '键盘侠', '网络喷子'
+      ]
+    },
+
+    face: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: true,
+      options: {
+        female: [
+          '清纯甜美', '冷艳高贵', '妩媚性感', '英气十足', '可爱软萌', '端庄大气', 
+          '明艳动人', '古典美人', '傲娇可爱', '苍白消瘦', '清纯干净', '温婉动人', 
+          '娇俏可爱', '活力阳光', '楚楚可怜', '纯欲诱人', '天使面孔', '高冷禁欲', 
+          '无害小白花', '网红脸', '整容美女', '素颜美女', '知性美女', '职场丽人',
+          '邻家女孩', '校花气质', '文艺女青年', '都市白领', '时尚潮女'
+        ],
+        male: [
+          '俊朗冷峻', '邪魅狂狷', '温润如玉', '痞帅不羁', '阳光开朗', '傲娇少年', 
+          '深情忧郁', '清秀俊逸', '桀骜不驯', '俊秀校草', '淡雅高贵', '野性粗犷', 
+          '斯文俊秀', '商务精英', '暖男气质', '高冷总裁', '阳光大男孩', '文艺青年',
+          '运动型男', '技术宅男', '创业青年', '都市型男', '潮流达人'
+        ],
+        common: [
+          '高级脸', '混血特征', '相貌普通', '妖冶魅惑', '清冷气质', '邻家亲和', 
+          '书卷文雅', '五官精致', '现代感十足', '都市气质', '时尚脸'
+        ]
+      }
+    },
+
+    body: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: true,
+      options: {
+        female: [
+          '娇小玲珑', '高挑纤细', '清冷偏瘦', '前凸后翘', '极致曲线', '丰满成熟', 
+          '骨感柔弱', '模特身材', '运动健美', '软萌娇小', '丰满却不臃肿', '胸大腰细', 
+          '微胖软萌', '珠圆玉润', '胸大屁股翘', '健身女神', '瑜伽体型', '舞蹈身材',
+          '都市丽人', '白领身材', '时尚模特', '网红身材', '健康美体'
+        ],
+        male: [
+          '英姿飒爽', '宽肩窄腰', '高大挺拔', '清瘦俊挺', '纤细修长', '壮硕结实', 
+          '修长文弱', '阳光运动', '肌肉爆炸', '完美薄肌', '健身达人', '商务精英体型',
+          '程序员身材', '运动员体格', '都市型男', '时尚潮男', '技术宅体型'
+        ],
+        common: [
+          '模特身材', '运动健美', '英姿飒爽', '都市气质', '现代审美'
+        ]
+      }
+    },
+
+    hobbies: {
+      type: 'multi-select',
+      randomCount: { min: 2, max: 5 },
+      genderSpecific: false,
+      options: [
+        '阅读', '电影', '听音乐', '做音乐', '写作', '绘画', '摄影', '烹饪', '烘焙', 
+        '运动', '健身', '跑步', '游泳', '篮球', '足球', '极限运动', '舞蹈', '乐器演奏', 
+        '戏剧表演', '旅行', '徒步', '露营', '钓鱼', '园艺', '手工艺', '模型制作', 
+        '电子游戏', '桌游', '品茶', '品酒', '收藏(邮票/硬币等)', '研究历史', 
+        '研究哲学', '学习外语', '看动漫', '追剧', '逛博物馆', '志愿者活动', 
+        '投资理财', '赛车', '潜水', '滑雪', '性爱', '自慰', '网购', '直播', 
+        '短视频制作', '网络游戏', '手机游戏', '社交媒体', 'VR体验', '密室逃脱',
+        '剧本杀', 'KTV', '酒吧', '咖啡厅', '健身房', '瑜伽', '普拉提', '马拉松'
+      ]
+    },
+
+    identity: {
+      type: 'single-select',
+      randomCount: { min: 1, max: 1 },
+      genderSpecific: false,
+      options: [
+        '大学生', '网红主播', '模特', '总裁', '投资人', '创业者', '健身教练', 
+        '工程师', '游戏策划', '医生', '护士', '程序员', '黑客', '导演', '画家', 
+        '音乐家', '运动员', '电竞选手', '老师', '调酒师', '厨师', '美食评论家', 
+        '摄影师', '消防员', '律师', '警察', '设计师', '建筑师', 'UI设计师',
+        '产品经理', '市场营销', '公关专员', '广告策划', '主播', '博主', 'UP主',
+        '自媒体人', '网络作家', '游戏主播', '健身博主', '美妆博主', '旅行博主'
+      ]
+    },
+
+    // 现代都市专属配饰
+    accessories: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '框架眼镜', '金属细框眼镜', '耳环', '长耳坠', '耳钉', '项链', '金属链条', 
+        '手表', '戒指', '银戒指', '手链', '手镯', '唇钉', '眉钉', '乳钉', '舌钉', 
+        '胸针', '袖扣', '棒球帽', '渔夫帽', '口罩', '智能手表', '蓝牙耳机',
+        'AirPods', '智能手环', '平板电脑', '笔记本电脑', '单反相机', '自拍杆',
+        '充电宝', '手机壳', '车钥匙', '名牌包包', '潮牌鞋子', '墨镜', '帽子'
+      ]
+    },
+
+    // 现代都市专属穿搭风格
+    dressStyle: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: false,
+      options: [
+        '温柔淑女风', '活泼可爱风', '法式优雅', '韩系潮流风', '韩系女团风', 
+        '欧美火辣风', '职场通勤风', '知识分子风', '邻家简约风', '森系文艺', 
+        '简约盐系', '慵懒随性', '纯欲风', 'Y2K复古风', '亚文化辣妹风', 
+        '洛丽塔', '健身房运动风', '户外机能风', '名媛风', '性感御姐风', 
+        '韩系男团风', '商务休闲', '美式休闲', '日系休闲', '简约基础款', 
+        '街头潮流', '高街风格', '嘻哈说唱', '工装风格', '户外运动风', 
+        '雅痞绅士风', '书卷气风格', '老钱风', '复古港风', '精致学院风', 
+        '居家舒适风', '衬衣', '毛衣', '吊带裙', '背心热裤', '风衣',
+        '网红同款', 'INS风', '日系甜美', '欧美性感', '商务正装'
+      ]
+    },
+
+    // 现代都市专属发型
+    hairstyle: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: true,
+      options: {
+        female: [
+          '长直发', '大波浪', '小卷发', '空气刘海', '八字刘海', '齐刘海',
+          '中分', '偏分', '无刘海', '丸子头', '马尾', '双马尾',
+          '半扎发', '编发', '盘发', '蛋卷头', '羊毛卷', '泡面头',
+          '锁骨发', '短发', 'BOB头', '齐肩发', '及腰长发', '渐变色',
+          '挑染', '漂染', '奶奶灰', '脏橘色', '蜜茶色'
+        ],
+        male: [
+          '寸头', '平头', '板寸', '毛寸', '短发', '中长发',
+          '分头', '背头', '油头', '飞机头', '莫西干', '锅盖头',
+          '韩式刘海', '纹理烫', '定位烫', '卷发', '直发', '染发',
+          '渐变发', '潮男发型', '商务发型', '学生头', '艺术家发型'
+        ],
+        common: [
+          '自然发型', '时尚造型', '个性发型', '经典发型', '潮流发型'
+        ]
+      }
+    },
+
+    // 现代都市专属病症
+    illness: {
+      type: 'multi-select',
+      randomCount: { min: 0, max: 2 },
+      genderSpecific: false,
+      options: [
+        '近视', '散光', '颈椎病', '腰椎病', '肩周炎', '鼠标手',
+        '失眠', '焦虑症', '抑郁症', '强迫症', '社交恐惧症', '拖延症',
+        '高血压', '糖尿病', '高血脂', '脂肪肝', '胃病', '便秘',
+        '过敏性鼻炎', '哮喘', '湿疹', '荨麻疹', '脱发', '痤疮',
+        '偏头痛', '慢性疲劳', '肠胃炎', '咽炎', '口腔溃疡', '牙疼',
+        '网络成瘾', '手机依赖', '游戏成瘾', '购物成瘾', '暴食症', '厌食症'
+      ]
+    },
+
+    // 现代都市专属特点
+    specialTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '记忆力超群', '反应速度快', '逻辑思维强', '创意思维活跃', '学习能力强',
+        '沟通能力强', '领导能力', '组织能力', '执行能力', '抗压能力强',
+        '电脑技术精通', '外语能力强', '驾驶技术好', '运动天赋', '艺术天赋',
+        '商业头脑', '投资眼光', '时尚嗅觉', '网络敏感度', '社交达人',
+        '夜猫子', '早起鸟', '路痴', '方向感强', '味觉敏感',
+        '酒量好', '酒量差', '晕车', '不晕车', '怕高',
+        '完美主义', '拖延症', '强迫症', '选择困难症', '社交牛逼症'
+      ]
+    },
+
+    // 现代都市专属体味
+    bodyScent: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: false,
+      options: [
+        '自然体香', '淡香', '无味', '香水味', '洗发水香味',
+        '沐浴露香味', '护肤品香味', '化妆品味', '衣物柔顺剂香',
+        '咖啡味', '烟味', '酒味', '薄荷味', '柠檬味',
+        '运动后汗味', '健身房味', '办公室味', '书本味', '电子产品味',
+        '奶茶味', '甜品味', '烧烤味', '火锅味', '外卖味'
+      ]
+    }
+  },
+
+  ancient: {
+    name: "古风仙侠",
+    description: "古风仙侠背景，适合古代宫廷、江湖武侠、仙侠修真等主题",
+    icon: "🏯",
+    color: {
+      primary: "#4a5d23",
+      secondary: "#f4e4bc",
+      accent: "#d4af37",
+      background: "linear-gradient(135deg, #4a5d23 0%, #5a6b2a 50%, #3e4f1e 100%)"
+    },
+    decorations: ["🌸", "🌺", "🍃", "🌙"],
+
+    positiveTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '仁义礼智', '温文尔雅', '宽宏大量', '刚正不阿', '心境如水', '重诺守信', '慈悲为怀',
+        '谦逊有礼', '深情不渝', '慷慨义气', '沉稳如山', '耐心如海', '专情不二', '明察秋毫', '忍辱负重',
+        '稳重持重', '冷静如冰', '成熟稳重', '正气凛然', '坚韧不拔', '敢作敢当', '克己复礼', '淡泊名利',
+        '悟性极高', '灵慧过人', '阳光正气', '主动进取', '热诚待人', '依恋深情', '赤诚相见',
+        '活泼灵动', '纯真无邪', '娇憨可人', '忠心耿耿', '风趣幽默', '英勇无畏', '心地善良', '豁达开朗', '侠肝义胆',
+        '慈悲心肠', '恩义如山', '舍己为人', '志向高远', '胸怀坦荡', '天真烂漫', '温润如玉',
+        '仙风道骨', '出尘脱俗', '心如止水', '慧根深厚', '仁者无敌', '君子之风', '侠者风范'
+      ]
+    },
+
+    negativeTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '心如寒冰', '冷酷无情', '嗜血如命', '毒舌讥讽', '虚情假意', '残暴不仁', '冷言冷语', '拘泥古板',
+        '傲娇别扭', '外冷内热', '心口不一', '高傲自大', '自恋狂妄', '病态执念', '桀骜不驯', '别别扭扭',
+        '玩世不恭', '贪恋享乐', '随心所欲', '叛逆不羁', '疑神疑鬼', '不修边幅', '懒惰成性', '轻佻浮躁',
+        '奢华无度', '冲动易怒', '占有欲强', '神经兢兢', '心魔入体', '阴郁寡欢', '伪善虚伪', '城府极深',
+        '奸诈狡猾', '虚荣爱面', '贪得无厌', '无耻之尤', '厌世绝望', '不择手段', '毫无底线',
+        '暴躁如雷', '薄情寡义', '暴戾恣睢', '恶意揣测', '控制欲强', '嫉妒成魔', '多疑成性',
+        '自暴自弃', '疯魔癫狂', '偏执成魔', '情绪无常', '敏感脆弱', '愚钝迟钝', '畏畏缩缩',
+        '冷漠无情', '愧疚自责', '忧郁成疾', '内向孤僻', '不合时宜', '优柔寡断', '自卑怯懦', '幼稚天真',
+        '入魔走火', '心魔缠身', '杀戮成性', '嗜血成瘾', '疯狂偏执', '阴毒狠辣', '心狠手辣'
+      ]
+    },
+
+    loveViews: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '一见钟情', '日久生情', '至死不渝', '红颜知己', '佳人如玉',
+        '痴心不改', '相濡以沫', '举案齐眉', '琴瑟和鸣', '青梅竹马',
+        '天作之合', '心有灵犀', '两情相悦', '倾国倾城', '白首不离',
+        '情深似海', '缘定三生', '梁祝化蝶', '比翼双飞', '心心相印',
+        '生死相依', '海誓山盟'
+      ]
+    },
+
+    socialStyle: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '独来独往', '广结善缘', '仗义执言', '温文尔雅', '古道热肠',
+        '不拘小节', '谦逊有礼', '豪爽直率', '深藏不露', '亲和力强',
+        '沉默寡言', '言简意赅', '风趣幽默', '庄重威严', '平易近人',
+        '高深莫测', '侠义为先', '知音难觅', '三教九流', '江湖义气',
+        '世外高人', '社交达人'
+      ]
+    },
+
+    face: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: true,
+      options: {
+        female: [
+          '倾国倾城', '冰肌玉骨', '明眸皓齿', '樱桃小口', '柳眉杏眼',
+          '肤如凝脂', '眉目如画', '娇艳如花', '清水芙蓉', '温婉如玉',
+          '妖娆妩媚', '秀美端庄', '清丽脱俗', '仙姿玉貌', '娇俏可人'
+        ],
+        male: [
+          '剑眉星目', '面如冠玉', '英俊潇洒', '浓眉大眼', '棱角分明',
+          '气宇轩昂', '俊朗不凡', '威武英挺', '温润如玉', '冷峻深邃',
+          '眉宇英气', '面容刚毅', '风度翩翩', '相貌堂堂', '英气逼人'
+        ],
+        common: [
+          '仙风道骨', '超凡脱俗', '气质出众', '神采奕奕', '容光焕发',
+          '面容慈祥', '神秘莫测', '沧桑深邃', '清秀俊雅', '古朴典雅',
+          '威严肃穆', '淡然出尘', '灵动活泼', '庄重大方', '清新淡雅'
+        ]
+      }
+    },
+
+    body: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: true,
+      options: {
+        female: [
+          '窈窕淑女', '婀娜多姿', '玲珑有致', '纤细柔美', '曼妙身姿',
+          '柳腰花貌', '亭亭玉立', '楚楚动人', '轻盈如燕', '娇小玲珑',
+          '丰满圆润', '高挑优雅', '苗条纤秀', '妙曼多姿', '体态轻盈'
+        ],
+        male: [
+          '身材魁梧', '高大威猛', '精壮结实', '挺拔如松', '健硕有力',
+          '身形矫健', '虎背熊腰', '修长挺立', '肌肉发达', '体格强壮',
+          '身材匀称', '气宇轩昂', '威风凛凛', '身姿挺拔', '骨骼清奇'
+        ],
+        common: [
+          '体态优雅', '身姿飘逸', '仙风道骨', '超凡脱俗', '气质卓然',
+          '身形轻盈', '举止优雅', '仪态万方', '风度翩翩', '神态自若',
+          '身材匀称', '体态端庄', '气度不凡', '身姿潇洒', '风采卓绝'
+        ]
+      }
+    },
+
+    hobbies: {
+      type: 'multi-select',
+      randomCount: { min: 2, max: 5 },
+      genderSpecific: false,
+      options: [
+        '研读典籍', '观赏戏曲', '听古曲', '作诗词', '练字书法', '作画丹青', '摄影留影', '烹饪美食', '制作糕点',
+        '习武练剑', '修炼内功', '晨练太极', '游水戏水', '蹴鞠', '马球', '骑射', '舞剑', '抚琴弄箫',
+        '演戏', '游历山川', '登山涉水', '野营', '垂钓', '种花养草', '手工制作', '制作傀儡',
+        '下棋', '品茗', '品酒', '收藏古玩', '研究史书', '研习哲学', '学习外语', '看话本', '听书',
+        '逛庙会', '做善事', '投资经商', '赛马', '潜水修炼', '雪山修行', '双修', '独修',
+        '炼丹', '制药', '采药', '占卜算命', '风水堪舆', '研究阵法', '修炼法术', '驯兽',
+        '养蛊', '制毒', '解毒', '暗器', '轻功', '易容', '医术', '毒术'
+      ]
+    },
+
+    identity: {
+      type: 'single-select',
+      randomCount: { min: 1, max: 1 },
+      genderSpecific: false,
+      options: [
+        '皇帝', '皇后', '贵妃', '太子', '公主', '王爷', '郡主', '世子', '丞相',
+        '将军', '侍卫', '太监', '宫女', '太医', '钦天监', '大理寺卿', '刺史',
+        '县令', '书生', '才女', '武林盟主', '门派掌门', '剑客', '杀手',
+        '江湖侠客', '镖师', '商贾', '青楼花魁', '说书先生', '戏班子',
+        '仙尊', '仙子', '修士', '妖王', '妖姬', '鬼王', '魔尊', '神君',
+        '散修', '魔修', '剑修', '体修', '丹修', '阵法师', '炼器师', '驯兽师',
+        '药王', '毒师', '神医', '江湖郎中', '风水师', '占卜师', '阴阳师'
+      ]
+    },
+
+    // 古风仙侠专属配饰
+    accessories: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '玉簪', '凤钗', '步摇', '金钗', '珠花', '玉佩', '腰牌', '香囊',
+        '扇子', '玉镯', '金手镯', '戒指', '耳坠', '项链', '发带', '头冠',
+        '面纱', '斗笠', '玉箫', '古琴', '佛珠', '桃木剑', '护身符',
+        '法器', '仙剑', '魔器', '灵兽', '储物袋', '传音玉符', '传送阵盘',
+        '丹药', '符咒', '阵旗', '罗盘', '八卦镜', '铃铛', '风铃',
+        '玉如意', '紫金冠', '龙凤镯', '灵石', '法珠', '仙丹', '神兵'
+      ]
+    },
+
+    // 古风仙侠专属穿搭风格
+    dressStyle: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: false,
+      options: [
+        '白衣胜雪', '青衫如墨', '锦衣华服', '素衣布履', '道袍飘逸',
+        '宫廷华贵', '江湖豪迈', '仙风道骨', '简约素雅', '华丽繁复',
+        '清雅脱俗', '威武霸气', '温润如玉', '飘逸出尘', '古朴典雅',
+        '雍容华贵', '洒脱不羁', '庄重肃穆', '清新淡雅', '富贵逼人',
+        '仙气飘飘', '朴素无华'
+      ]
+    },
+
+    // 古风仙侠专属发型
+    hairstyle: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: true,
+      options: {
+        female: [
+          '云髻高盘', '流云髻', '凤凰髻', '飞仙髻', '蝴蝶髻',
+          '双环髻', '垂髫披肩', '三千青丝', '乌云密布', '瀑布长发',
+          '编发如麻', '花髻入云', '青丝如墨', '髻插金钗', '发如瀑布'
+        ],
+        male: [
+          '束发高冠', '道士髻', '儒生巾', '侠客散发', '武士束髻',
+          '长发披肩', '短发精神', '半束半散', '发髻简洁', '青丝如墨',
+          '背头梳理', '侧分雅致', '自然散落', '发带束缚', '头冠威严'
+        ],
+        common: [
+          '仙风道髻', '气质发型', '奇幻美发', '灵动发丝', '飘逸长发',
+          '古韵发式', '清雅髻发', '脱俗发型', '超凡发髻', '仙气发丝',
+          '古典发式', '雅致发型', '出尘发髻', '潇洒发型', '清新发式'
+        ]
+      }
+    },
+
+    // 古风仙侠专属病症
+    illness: {
+      type: 'multi-select',
+      randomCount: { min: 0, max: 2 },
+      genderSpecific: false,
+      options: [
+        '寒毒入体', '火毒攻心', '经脉逆转', '真气紊乱', '内力受损',
+        '走火入魔', '心魔缠身', '毒素侵蚀', '瘟疫缠身', '咒术反噬',
+        '灵力枯竭', '丹田受创', '经脉堵塞', '阴阳失调', '五脏六腑受损',
+        '中毒', '蛊毒', '情毒', '相思病', '心病',
+        '风寒', '暑热', '湿气', '燥邪', '痨病',
+        '失忆症', '癫狂症', '哑疾', '跛足', '失明',
+        '胎毒', '奇毒', '百日咳', '瘴气中毒', '魂魄不全'
+      ]
+    },
+
+    // 古风仙侠专属特点
+    specialTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '内力深厚', '剑法精湛', '轻功卓绝', '医术高超', '毒术精通',
+        '琴棋书画样样精通', '过目不忘', '算无遗策', '料事如神', '慧眼识人',
+        '天赋异禀', '血脉特殊', '体质特异', '骨骼清奇', '经脉异常',
+        '能见鬼神', '通晓兽语', '精通阵法', '善于易容', '记忆超群',
+        '力大无穷', '身轻如燕', '千里眼', '顺风耳', '铁齿铜牙',
+        '刀枪不入', '水火不侵', '百毒不侵', '万法不沾', '神力护体',
+        '预知能力', '读心术', '隐身术', '分身术', '穿墙术',
+        '仙人血脉', '龙族血统', '凤凰血脉', '麒麟血脉', '妖族血统'
+      ]
+    },
+
+    // 古风仙侠专属体味
+    bodyScent: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 2 },
+      genderSpecific: false,
+      options: [
+        '体香天然', '淡雅幽香', '兰花香', '桂花香', '梅花香',
+        '茉莉花香', '牡丹花香', '荷花香', '菊花香', '玫瑰花香',
+        '檀香', '沉香', '龙涎香', '麝香', '冰片香',
+        '药香', '丹香', '墨香', '书香', '茶香',
+        '酒香', '脂粉香', '胭脂香', '香囊香', '香炉香',
+        '仙气缭绕', '灵气逼人', '妖气森森', '魔气冲天', '鬼气阴森',
+        '血腥味', '杀气', '死气', '尸臭', '腐臭',
+        '无味', '清香', '异香', '奇香', '天香'
+      ]
+    }
+  },
+
+  scifi: {
+    name: "星际科幻",
+    description: "未来科幻背景，适合星际旅行、机甲战斗、赛博朋克等主题",
+    icon: "🚀",
+    color: {
+      primary: "#0a1633",
+      secondary: "#64d9ff",
+      accent: "#00bcd4",
+      background: "linear-gradient(135deg, #0a1633 0%, #1a237e 50%, #283593 100%)"
+    },
+    decorations: ["⭐", "🌌", "💫", "🛸"],
+
+    positiveTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '星际探索', '团队协作', '适应变化', '勇敢冒险', '学习成长', '创新思维',
+        '技术天才', '逻辑思维', '冷静分析', '完美执行', '系统思考', '数据分析'
+      ]
+    },
+
+    hobbies: {
+      type: 'multi-select',
+      randomCount: { min: 2, max: 5 },
+      genderSpecific: false,
+      options: [
+        '量子阅读', '全息电影', '虚拟游戏', 'AI对话', '星际旅行', '机甲驾驶',
+        '程序设计', 'VR创作', '太空探索', '基因研究', '量子计算', '时空研究'
+      ]
+    },
+
+    identity: {
+      type: 'single-select',
+      randomCount: { min: 1, max: 1 },
+      genderSpecific: false,
+      options: [
+        '星际舰长', '机甲驾驶员', '科学家', '工程师', '医生', '商人', '军官',
+        '黑客', '人工智能', '仿生人', '改造人', '赏金猎人', '星际海盗'
+      ]
+    }
+  },
+
+  fantasy: {
+    name: "奇幻魔法",
+    description: "奇幻魔法背景，适合中世纪奇幻、龙与地下城、魔法学院等主题",
+    icon: "🧙‍♂️",
+    color: {
+      primary: "#2d1b69",
+      secondary: "#c9b037",
+      accent: "#9b59b6",
+      background: "linear-gradient(135deg, #2d1b69 0%, #8e44ad 50%, #5d4e75 100%)"
+    },
+    decorations: ["✨", "🔮", "⚡", "🌟"],
+
+    positiveTraits: {
+      type: 'multi-select',
+      randomCount: { min: 1, max: 3 },
+      genderSpecific: false,
+      options: [
+        '睿智博学', '温柔体贴', '心胸宽广', '意志坚定', '内心强大', '重情重义',
+        '魔法天赋', '智慧超群', '勇敢无畏', '正义感强', '神秘莫测', '元素亲和'
+      ]
+    },
+
+    hobbies: {
+      type: 'multi-select',
+      randomCount: { min: 2, max: 5 },
+      genderSpecific: false,
+      options: [
+        '研读魔法书', '炼金术', '魔法实验', '召唤术', '附魔', '占卜', '预言',
+        '地下城探险', '魔物研究', '宝藏狩猎', '魔法决斗', '驯兽', '药剂调配'
+      ]
+    },
+
+    identity: {
+      type: 'single-select',
+      randomCount: { min: 1, max: 1 },
+      genderSpecific: false,
+      options: [
+        '国王', '女王', '王子', '公主', '大魔法师', '战斗法师', '牧师', '圣骑士',
+        '游侠', '盗贼', '刺客', '吟游诗人', '炼金术师', '召唤师', '冒险者'
+      ]
+    }
+  }
+};
+
+// 保持性相关选项为通用配置（从原配置中继承）
+const UNIVERSAL_SEXUAL_OPTIONS = {
+  biologicalGender: ['女', '男', '扶她', '双性', '无性'],
+  sexualOrientation: ['异性恋', '同性恋', '四爱', '双性恋', '泛性恋', '无爱者', '无性恋'],
+  
+  sensitivity: {
+    type: 'single-select',
+    randomCount: { min: 1, max: 1 },
+    genderSpecific: false,
+    options: ['身体迟钝', '普通敏感', '较为敏感', '很敏感', '全身都是敏感点', '轻触即可唤起快感', '痛感与快感界限模糊', '触碰就高潮', '多重高潮体质', '感觉过载(易被过度刺激)']
+  },
+  
+  libido: {
+    type: 'single-select',
+    randomCount: { min: 1, max: 1 },
+    genderSpecific: false,
+    options: ['禁欲', '无性欲', '极低性欲', '低于普通', '普通性欲', '高于平均', '强烈性欲', '极高性欲', '时时刻刻都有极高性欲']
+  },
+  
+  sexualHistory: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 3 },
+    genderSpecific: false,
+    options: ['无性经验', '仅有理论知识', '仅有一次经验', '经验很少', '只有固定的长期伴侣', '经验适中', '有过数位伴侣', '经验丰富', '性观念开放', '性关系混乱', '有BDSM经验', '仅有同性经验', '仅有异性经验', '双性经验皆有', '有过非自愿性行为', '曾嫖娼', '当过娼', '有为了资源或目的的性经历', '曾有经验但很久没有性生活']
+  },
+  
+  // 性癖和敏感点保持通用
+  kinks: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 5 },
+    genderSpecific: false,
+    options: [
+      '支配他人', '捆绑他人', '掌掴或鞭打他人', '言语羞辱他人', '精神控制', 
+      '命令与服从', '设计并控制情节', '将伴侣当作宠物饲养', '让伴侣嫉妒', 
+      '通过任务或考验控制伴侣', '对伴侣进行身体崇拜', '夺取伴侣的感官(如蒙眼)', 
+      '制造并欣赏伴侣的痛苦或快乐表情', '对伴侣进行强制高潮', '决定伴侣的衣着', 
+      '在伴侣身上留下印记(如吻痕)', '审问式对话', '剃毛', '灌肠', '禁止高潮', 
+      '臣服于人', '被捆绑', '被掌掴或被鞭打', '被言语羞辱', '被精神控制', 
+      '听从命令与安排', '服从情节安排', '作为宠物被饲养', '为伴侣而嫉妒', 
+      '通过完成任务获得奖赏', '身体被崇拜', '被剥夺感官(如被蒙眼)', 
+      '自己的痛苦或快乐表情被欣赏', '被强制高潮', '被决定衣着', '身上被留下印记', 
+      '被审问式对话', '被剃毛', '被灌肠', '被禁止高潮', '角色扮演', '年龄扮演', 
+      '制服诱惑', '恋物(特定物品或材质如丝袜/皮革/乳胶)', '恋足', '恋手', 
+      '疼痛游戏(痛感与快感模糊)', '在公共或半公共场所', '暴露自己的身体', 
+      '窥视他人', '被窥视', '电话或语音性爱', '录像或拍照', '多人行', 
+      'NTR(伴侣与他人发生关系)', '被NTR', '体型差', '力量差', '脏话', '眼泪', 
+      '汗水', '气味', '蜡烛或冰块(温度游戏)', '食物(将食物用于身体)', 
+      '窒息游戏(呼吸控制)', '水中嬉戏', '睡眠侵犯(在对方睡着时)', '口交', 
+      '手交', '乳交', '足交', '子宫交'
+    ]
+  },
+
+  sensitiveSpots: {
+    type: 'multi-select',
+    randomCount: { min: 2, max: 4 },
+    genderSpecific: true,
+    options: {
+      female: [
+        '嘴唇', '舌头', '脖颈', '后颈', '锁骨', '耳垂', '脊椎', '腰窝', '侧腰', 
+        '小腹', '大腿内侧', '脚踝', '脚心', '胸口', '乳头', '肚脐', '臀部', 
+        '阴蒂', '穴口', 'G点', '子宫口', '子宫内壁', '后穴口', '结肠口'
+      ],
+      male: [
+        '嘴唇', '舌头', '脖颈', '后颈', '锁骨', '耳垂', '脊椎', '腰窝', '侧腰', 
+        '小腹', '大腿内侧', '脚踝', '脚心', '胸口', '乳头', '肚脐', '臀部', 
+        '后穴口', '前列腺', '结肠口', '阴茎', '龟头', '马眼', '尿道'
+      ],
+      common: []
+    }
+  },
+
+  relationshipStatus: {
+    type: 'single-select',
+    randomCount: { min: 1, max: 1 },
+    genderSpecific: false,
+    options: [
+      '母胎单身', '单身', '暗恋中', '刚刚失恋', '稳定恋爱中', '已订婚', '秘密已婚', 
+      '合约婚姻', '开放式关系', '正在办理离婚', '已离异', '丧偶', '炮友关系', 
+      '被前任纠缠', '心中有白月光', '渴望被包养', '正在包养他人', '假装单身', 
+      '炒cp中', '海王', '海后'
+    ]
+  }
+};
+
+// 基础选项配置（用于向后兼容）
+const OPTIONS_CONFIG = {
+  positiveTraits: {
+    type: 'multi-select',
+    randomCount: { min: 2, max: 4 },
+    genderSpecific: false,
+    options: [
+      '睿智', '温柔', '豁达', '坚守原则', '精神强大', '重情重义', '包容大度', 
+      '彬彬有礼', '深情', '慷慨', '可靠', '有耐心', '专一', '理智', '隐忍', 
+      '沉稳', '冷静', '成熟', '正直', '有毅力', '有担当', '自律', '简朴', 
+      '善于教导', '古灵精怪', '阳光开朗', '主动', '热情', '黏人', '真诚坦率', 
+      '活泼', '单纯', '可爱', '忠诚', '幽默', '勇敢', '善良', '乐观', '仗义', 
+      '有同理心', '富有责任感', '牺牲精神', '目标坚定', '开放', '天真烂漫', '软萌'
+    ]
+  },
+  negativeTraits: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 3 },
+    genderSpecific: false,
+    options: [
+      '情感淡漠', '冷酷', '冷血', '毒舌', '虚伪', '暴虐', '冷嘲热讽', '死板', 
+      '傲娇', '外冷内热', '口是心非', '傲慢', '自恋', '病娇', '叛逆', '别扭', 
+      '玩世不恭', '爱玩乐', '随性', '反骨', '疑心重', '不着调', '懒惰', '轻浮', 
+      '奢靡', '冲动', '占有欲强', '神经质', '黑化', '阴郁', '伪善', '城府深', 
+      '狡猾', '虚荣', '贪婪', '缺乏羞耻心', '厌世', '不择手段', '无底线', 
+      '暴躁', '薄情', '暴力倾向', '恶意揣测', '操控欲强', '妒忌心重', '多疑', 
+      '自毁倾向', '疯癫', '偏执', '情绪不稳定', '敏感脆弱', '迟钝', '社恐', 
+      '冷漠', '愧疚自责', '忧郁', '内向', '不合群', '犹豫不决', '自卑', '幼稚'
+    ]
+  },
+  loveViews: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 3 },
+    genderSpecific: false,
+    options: [
+      '一生只爱一人', '花心渣系', '接受非一对一关系', '接受同时和多人是伴侣关系', 
+      '事业优于爱情', '爱情至上', '享受暧昧关系', '不信任亲密关系', '更重视肉体关系', 
+      '接受多人共享伴侣', '婚姻是交易', '不婚主义', '爱无能', '占有欲极强', 
+      '爱而不自知', '单箭头执着', '保护欲强', '偏执病娇', '把爱情当游戏', '慢热', 
+      '纯真懵懂', '放荡不羁', '忠贞守护', '伪装冷漠实则深情', '对外冷漠只宠一人', 
+      '容易吃醋', '爱自由拒绝束缚', '为爱牺牲一切', '不求回应默默付出', 
+      '拒绝暧昧界限分明', '暴力偏执控制欲', '人间清醒型', '善于利用感情谋算', 
+      '追求轰轰烈烈的爱情', '平凡细水长流型', '与世界为敌也护你周全', 
+      '与其相守不如成全', '爱上便无法回头', '渴望被爱与关心', '追求精神恋爱', 
+      '不主动也不拒绝'
+    ]
+  },
+  socialStyle: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 3 },
+    genderSpecific: false,
+    options: [
+      '能说会道', '八面玲珑', '社牛天花板', '逗比搞笑', '热情似火', '活泼开朗', 
+      '自来熟', '讨人喜欢', '厚脸皮粘人', '热心肠', '夸张张扬', '高调霸气', 
+      '活力四射感染全场', '天真软萌', '超会撒娇', '小哭包', '呆萌天然呆', 
+      '惹人心疼的小可怜', '人畜无害又软又甜', '伪装天真', '装傻卖萌', '口蜜腹剑', 
+      '笑面虎型', '沉默寡言', '冷漠疏离', '孤僻独行', '安静听众', '礼貌疏远', 
+      '不主动但有回应', '选择性社交', '社恐型', '边缘化习惯性透明', '佛系随缘', 
+      '防备心强', '高冷拒人千里', '爱憎分明', '用行动代替语言', '低调不显山露水', 
+      '暗中观察型', '外热内冷', '外冷内热', '白切黑', '黑切白', '外表张扬内里孤独', 
+      '表面佛系暗地操心', '表面高冷暗中默默守护', '喜怒不形于色但内心澎湃', 
+      '看人下菜碟', '故作轻浮内心深沉', '伪装无害暗藏杀机', '若即若离游走于人群', 
+      '明面圆滑暗中冷血', '看似好说话实则不容侵犯', '随时抽身', '隐藏真实的自己'
+    ]
+  },
+  face: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 2 },
+    genderSpecific: true,
+    options: {
+      female: [
+        '清纯甜美', '冷艳高贵', '妩媚性感', '英气十足', '可爱软萌', '端庄大气', 
+        '明艳动人', '古典美人', '傲娇可爱', '苍白消瘦', '清纯干净', '温婉动人', 
+        '娇俏可爱', '活力阳光', '楚楚可怜', '纯欲诱人', '天使面孔', '高冷禁欲', 
+        '无害小白花'
+      ],
+      male: [
+        '俊朗冷峻', '邪魅狂狷', '温润如玉', '痞帅不羁', '阳光开朗', '傲娇少年', 
+        '深情忧郁', '清秀俊逸', '桀骜不驯', '俊秀校草', '淡雅高贵', '野性粗犷', 
+        '斯文俊秀'
+      ],
+      common: [
+        '高级脸', '混血特征', '相貌普通', '妖冶魅惑', '清冷气质', '邻家亲和', 
+        '书卷文雅', '五官精致'
+      ]
+    }
+  },
+  body: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 2 },
+    genderSpecific: true,
+    options: {
+      female: [
+        '娇小玲珑', '高挑纤细', '清冷偏瘦', '前凸后翘', '极致曲线', '丰满成熟', 
+        '骨感柔弱', '模特身材', '运动健美', '软萌娇小', '丰满却不臃肿', '胸大腰细', 
+        '微胖软萌', '珠圆玉润', '胸大屁股翘'
+      ],
+      male: [
+        '英姿飒爽', '宽肩窄腰', '高大挺拔', '清瘦俊挺', '纤细修长', '壮硕结实', 
+        '修长文弱', '阳光运动', '肌肉爆炸', '完美薄肌'
+      ],
+      common: [
+        '模特身材', '运动健美', '英姿飒爽'
+      ]
+    }
+  },
+  hobbies: {
+    type: 'multi-select',
+    randomCount: { min: 2, max: 5 },
+    genderSpecific: false,
+    options: [
+      '阅读', '电影', '听音乐', '做音乐', '写作', '绘画', '摄影', '烹饪', '烘焙', 
+      '运动', '健身', '跑步', '游泳', '篮球', '足球', '极限运动', '舞蹈', '乐器演奏', 
+      '戏剧表演', '旅行', '徒步', '露营', '钓鱼', '园艺', '手工艺', '模型制作', 
+      '电子游戏', '桌游', '品茶', '品酒', '收藏(邮票/硬币等)', '研究历史', 
+      '研究哲学', '学习外语', '看动漫', '追剧', '逛博物馆', '志愿者活动', 
+      '投资理财', '赛车', '潜水', '滑雪', '性爱', '自慰'
+    ]
+  },
+  identity: {
+    type: 'single-select',
+    randomCount: { min: 1, max: 1 },
+    genderSpecific: false,
+    options: [
+      '明星', '豪门继承人', '豪门私生子', '大学生', '网红主播', '模特', '总裁', 
+      '投资人', '创业者', '甜点师', '健身教练', '工程师', '游戏策划', '医生', 
+      '护士', '赛车手', '没落贵族', '检察官', '雇佣兵', '警察', '律师', '程序员', 
+      '黑客', '导演', '画家', '音乐家', '运动员', '电竞选手', '老师', '调酒师', 
+      '厨师', '美食评论家', '旅行家', '考古学家', '摄影师', '消防员'
+    ]
+  },
+  dressStyle: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 2 },
+    genderSpecific: false,
+    options: [
+      '休闲舒适', '简约大方', '甜美可爱', '性感妩媚', '知性优雅', '运动健康',
+      '文艺清新', '个性潮流', '商务正装', '复古经典', '前卫时尚', '民族风情'
+    ]
+  },
+  hairstyle: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 2 },
+    genderSpecific: true,
+    options: {
+      female: [
+        '长直发', '大波浪', '小卷发', '短发', '中长发', '马尾', '双马尾',
+        '丸子头', '半扎发', '编发', '盘发', '齐刘海', '偏分', '中分'
+      ],
+      male: [
+        '短发', '寸头', '分头', '背头', '卷发', '直发', '中长发',
+        '刘海', '莫西干', '板寸', '碎发', '油头', '蓬松发型'
+      ],
+      common: [
+        '自然发型', '时尚造型', '个性发型', '经典发型'
+      ]
+    }
+  },
+  accessories: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 3 },
+    genderSpecific: false,
+    options: [
+      '眼镜', '帽子', '围巾', '手表', '项链', '耳环', '戒指', '手链',
+      '胸针', '发饰', '腰带', '包包', '墨镜', '口罩', '手套'
+    ]
+  },
+  illness: {
+    type: 'multi-select',
+    randomCount: { min: 0, max: 2 },
+    genderSpecific: false,
+    options: [
+      '健康', '近视', '失眠', '过敏', '头痛', '胃病', '关节炎',
+      '高血压', '糖尿病', '心脏病', '呼吸道疾病', '皮肤病'
+    ]
+  },
+  specialTraits: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 3 },
+    genderSpecific: false,
+    options: [
+      '记忆力好', '反应敏捷', '体力充沛', '艺术天赋', '语言天赋',
+      '领导能力', '沟通能力', '分析能力', '创造力', '直觉敏锐',
+      '坚韧不拔', '适应力强', '学习能力强', '观察力敏锐'
+    ]
+  },
+  bodyScent: {
+    type: 'multi-select',
+    randomCount: { min: 1, max: 2 },
+    genderSpecific: false,
+    options: [
+      '自然体香', '淡香', '无味', '香水味', '肥皂味',
+      '洗发水香味', '沐浴露香味', '清新薄荷味', '温和花香',
+      '淡雅木香', '轻柔果香', '清洁味'
+    ]
+  }
+};
+    </script>
+
+    <!-- 主要应用逻辑 -->
+    <script>
+        // 全局变量
+        let currentWorld = null;
+        let selectedOptions = {
+            positiveTraits: [],
+            negativeTraits: [],
+            loveViews: [],
+            socialStyle: [],
+            face: [],
+            body: [],
+            hobbies: [],
+            identity: [],
+            accessories: [],
+            dressStyle: [],
+            hairstyle: [],
+            illness: [],
+            specialTraits: [],
+            bodyScent: [],
+            kinks: [],
+            sensitiveSpots: [],
+            relationshipStatus: [],
+            sensitivity: [],
+            libido: [],
+            sexualHistory: []
+        };
+        
+        // 显示世界选择视图
+        function showWorldSelection() {
+            // 重置用户的所有选择
+            resetUserSelections();
+            
+            document.getElementById('world-selection-view').classList.remove('hidden');
+            document.getElementById('character-generator-view').classList.add('hidden');
+            updateBackgroundDecorations();
+            
+            // 清除URL参数
+            const url = new URL(window.location);
+            url.searchParams.delete('world');
+            window.history.pushState({}, '', url);
+        }
+        
+        // 重置用户选择（内部函数，不显示确认对话框）
+        function resetUserSelections() {
+            // 重置基本信息表单
+            document.getElementById('realName').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('height').value = '';
+            document.getElementById('weight').value = '';
+            document.getElementById('biologicalGender').value = '';
+            document.getElementById('sexualOrientation').value = '';
+            
+            // 隐藏错误提示
+            document.getElementById('realNameError').style.display = 'none';
+            
+            // 重置所有选项数组
+            Object.keys(selectedOptions).forEach(key => {
+                selectedOptions[key] = [];
+            });
+            
+            // 更新所有选择显示
+            const fieldsToUpdate = [
+                'positiveTraits', 'negativeTraits', 'loveViews', 'socialStyle', 
+                'face', 'body', 'hobbies', 'identity', 'accessories', 
+                'dressStyle', 'hairstyle', 'illness', 'specialTraits', 'bodyScent',
+                'kinks', 'sensitiveSpots', 'relationshipStatus', 'sensitivity', 
+                'libido', 'sexualHistory'
+            ];
+            
+            fieldsToUpdate.forEach(field => {
+                updateSelectedItems(field);
+                updateOptionButtons(field);
+            });
+        }
+        
+        // 显示角色生成器视图
+        function showCharacterGenerator(worldKey) {
+            currentWorld = worldKey;
+            document.getElementById('world-selection-view').classList.add('hidden');
+            document.getElementById('character-generator-view').classList.remove('hidden');
+            
+            // 应用世界主题
+            applyWorldTheme(worldKey);
+            
+            // 初始化角色生成器
+            initCharacterGenerator(worldKey);
+            
+            // 更新URL参数
+            const url = new URL(window.location);
+            url.searchParams.set('world', worldKey);
+            window.history.pushState({ world: worldKey }, '', url);
+        }
+        
+        // 初始化角色生成器
+        function initCharacterGenerator(worldKey) {
+            const world = WORLDS_CONFIG[worldKey];
+            if (!world) return;
+            
+            // 更新世界显示
+            document.getElementById('worldIcon').textContent = world.icon;
+            document.getElementById('worldName').textContent = world.name;
+            
+            // 初始化选项网格 - 延迟执行确保DOM完全加载
+            setTimeout(() => {
+                initOptionGrids();
+                initializeAllOptionSections();
+            }, 100);
+        }
+        
+        // 初始化选项网格
+        function initOptionGrids() {
+            // 使用当前世界的配置或回退到通用配置
+            const worldConfig = WORLDS_CONFIG[currentWorld] || {};
+            const positiveConfig = worldConfig.positiveTraits || OPTIONS_CONFIG.positiveTraits;
+            const negativeConfig = worldConfig.negativeTraits || OPTIONS_CONFIG.negativeTraits;
+            
+            // 初始化正面性格
+            const positiveGrid = document.getElementById('positiveTraitsGrid');
+            if (positiveGrid) {
+                positiveGrid.innerHTML = '';
+                positiveConfig.options.forEach(option => {
+                    const btn = createOptionButton(option, 'positiveTraits');
+                    positiveGrid.appendChild(btn);
+                });
+            }
+            
+            // 初始化负面性格
+            const negativeGrid = document.getElementById('negativeTraitsGrid');
+            if (negativeGrid) {
+                negativeGrid.innerHTML = '';
+                negativeConfig.options.forEach(option => {
+                    const btn = createOptionButton(option, 'negativeTraits');
+                    negativeGrid.appendChild(btn);
+                });
+            }
+            
+            // 初始化其他选项组
+            initializeAllOptionSections();
+        }
+        
+        // 初始化所有选项组
+        function initializeAllOptionSections() {
+            const worldConfig = WORLDS_CONFIG[currentWorld] || {};
+            
+            // 获取当前的生理性别用于性别特定选项
+            const biologicalGender = document.getElementById('biologicalGender').value;
+            
+            // 定义所有需要初始化的选项组
+            const sections = [
+                'loveViews', 'socialStyle', 'face', 'body', 'hobbies', 
+                'identity', 'accessories', 'dressStyle', 'hairstyle', 
+                'illness', 'specialTraits', 'bodyScent', 'kinks', 
+                'sensitiveSpots', 'relationshipStatus', 'sensitivity', 
+                'libido', 'sexualHistory'
+            ];
+            
+            sections.forEach(sectionKey => {
+                const config = worldConfig[sectionKey] || OPTIONS_CONFIG[sectionKey] || UNIVERSAL_SEXUAL_OPTIONS[sectionKey];
+                
+                if (config && config.options) {
+                    const container = document.getElementById(sectionKey + 'Content');
+                    
+                    if (container) {
+                        const grid = container.querySelector('.options-grid') || container;
+                        grid.innerHTML = '';
+                        
+                        // 处理性别特定选项
+                        let options = config.options;
+                        if (config.genderSpecific && typeof options === 'object' && !Array.isArray(options)) {
+                            if (biologicalGender === '女') {
+                                // 女性：显示 female + common
+                                options = [...(options.female || []), ...(options.common || [])];
+                            } else if (biologicalGender === '男') {
+                                // 男性：显示 male + common
+                                options = [...(options.male || []), ...(options.common || [])];
+                            } else {
+                                // 未选择性别或其他性别：显示所有选项
+                                options = [
+                                    ...(options.male || []), 
+                                    ...(options.female || []), 
+                                    ...(options.common || [])
+                                ];
+                            }
+                        }
+                        
+                        if (Array.isArray(options)) {
+                            options.forEach(option => {
+                                const btn = createOptionButton(option, sectionKey);
+                                grid.appendChild(btn);
+                            });
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 创建选项按钮
+        function createOptionButton(option, fieldName) {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            btn.textContent = option;
+            btn.onclick = () => toggleOption(option, fieldName, btn);
+            return btn;
+        }
+        
+        // 切换选项选择状态
+        function toggleOption(option, fieldName, btn) {
+            const selected = selectedOptions[fieldName];
+            const index = selected.indexOf(option);
+            
+            if (index !== -1) {
+                // 如果已选择，则移除
+                selected.splice(index, 1);
+                btn.classList.remove('selected');
+            } else {
+                // 如果未选择，则添加
+                selected.push(option);
+                btn.classList.add('selected');
+            }
+            
+            updateSelectedItems(fieldName);
+        }
+        
+        // 更新已选择项目显示
+        function updateSelectedItems(fieldName) {
+            const container = document.getElementById(fieldName + 'Selected');
+            const selected = selectedOptions[fieldName] || [];
+            
+            // 字段名与显示名的映射
+            const fieldDisplayNames = {
+                'positiveTraits': '正面性格特征',
+                'negativeTraits': '负面性格特征',
+                'loveViews': '恋爱观',
+                'socialStyle': '社交风格',
+                'face': '面部特征',
+                'body': '身材特征',
+                'hobbies': '兴趣爱好',
+                'identity': '身份职业',
+                'dressStyle': '穿搭风格',
+                'hairstyle': '发型',
+                'accessories': '配饰',
+                'illness': '健康状况',
+                'specialTraits': '特殊能力',
+                'bodyScent': '体味',
+                'kinks': '性癖',
+                'sensitiveSpots': '敏感点',
+                'relationshipStatus': '关系状态',
+                'sensitivity': '身体敏感度',
+                'libido': '性欲强度',
+                'sexualHistory': '性经验'
+            };
+            
+            if (selected.length === 0) {
+                const displayName = fieldDisplayNames[fieldName] || fieldName;
+                container.innerHTML = `<span style="color: var(--muted-color); font-size: 12px;">点击上方展开${displayName}，或点击⚅添加自定义标签...</span>`;
+                return;
+            }
+            
+            container.innerHTML = selected.map(item => 
+                `<span class="selected-item">
+                    ${item}
+                    <span class="remove-item" onclick="removeSelectedItem('${item}', '${fieldName}')">&times;</span>
+                </span>`
+            ).join('');
+        }
+        
+        // 移除已选择项目
+        function removeSelectedItem(option, fieldName) {
+            const selected = selectedOptions[fieldName];
+            const index = selected.indexOf(option);
+            if (index !== -1) {
+                selected.splice(index, 1);
+            }
+            updateSelectedItems(fieldName);
+            
+            // 更新按钮状态
+            const grid = document.getElementById(fieldName + 'Grid');
+            if (grid) {
+                const buttons = grid.querySelectorAll('.option-btn');
+                buttons.forEach(btn => {
+                    if (btn.textContent === option) {
+                        btn.classList.remove('selected');
+                    }
+                });
+            }
+        }
+        
+        // 折叠/展开功能
+        function toggleCollapse(fieldName) {
+            const content = document.getElementById(fieldName + 'Content');
+            const header = content.previousElementSibling;
+            
+            content.classList.toggle('collapsed');
+            header.classList.toggle('collapsed');
+        }
+        
+        // 随机选择字段（根据性别智能选择）
+        function randomizeFieldByGender(fieldName) {
+            // 获取当前世界配置或通用配置
+            const worldConfig = WORLDS_CONFIG[currentWorld] || {};
+            const config = worldConfig[fieldName] || OPTIONS_CONFIG[fieldName] || UNIVERSAL_SEXUAL_OPTIONS[fieldName];
+            if (!config) return;
+            
+            // 清除当前选择
+            selectedOptions[fieldName] = [];
+            
+            // 获取选项列表
+            let options = config.options;
+            
+            // 处理性别特定选项
+            if (config.genderSpecific && typeof options === 'object' && !Array.isArray(options)) {
+                const biologicalGender = document.getElementById('biologicalGender').value;
+                if (biologicalGender === '女') {
+                    // 女性：显示 female + common
+                    options = [...(options.female || []), ...(options.common || [])];
+                } else if (biologicalGender === '男') {
+                    // 男性：显示 male + common
+                    options = [...(options.male || []), ...(options.common || [])];
+                } else {
+                    // 未选择性别或其他性别：显示所有选项
+                    options = [
+                        ...(options.male || []), 
+                        ...(options.female || []), 
+                        ...(options.common || [])
+                    ];
+                }
+            }
+            
+            if (!Array.isArray(options)) return;
+            
+            // 随机选择
+            const count = Math.floor(Math.random() * (config.randomCount.max - config.randomCount.min + 1)) + config.randomCount.min;
+            
+            const shuffled = [...options].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < Math.min(count, shuffled.length); i++) {
+                selectedOptions[fieldName].push(shuffled[i]);
+            }
+            
+            // 更新显示
+            updateSelectedItems(fieldName);
+            updateOptionButtons(fieldName);
+        }
+
+        // 更新选项按钮状态
+        function updateOptionButtons(fieldName) {
+            const grid = document.getElementById(fieldName + 'Grid');
+            if (!grid) return;
+            
+            const buttons = grid.querySelectorAll('.option-btn');
+            const selected = selectedOptions[fieldName] || [];
+            
+            buttons.forEach(btn => {
+                if (selected.includes(btn.textContent)) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+        
+        // 随机生成全部
+        // 随机单个字段
+        function randomizeField(fieldName) {
+            const currentWorld = localStorage.getItem('selectedWorld') || 'modern';
+            const worldConfig = WORLDS_CONFIG[currentWorld];
+            const universalConfig = UNIVERSAL_SEXUAL_OPTIONS;
+            
+            // 确定使用哪个配置
+            let config;
+            if (worldConfig && worldConfig[fieldName]) {
+                config = worldConfig[fieldName];
+            } else if (universalConfig[fieldName]) {
+                config = universalConfig[fieldName];
+            } else if (OPTIONS_CONFIG[fieldName]) {
+                config = OPTIONS_CONFIG[fieldName];
+            } else {
+                console.warn('找不到字段配置:', fieldName);
+                return;
+            }
+            
+            // 获取当前生理性别
+            const biologicalGender = document.getElementById('biologicalGender').value;
+            
+            // 处理选项数组
+            let options = config.options;
+            if (config.genderSpecific && typeof options === 'object' && !Array.isArray(options)) {
+                if (biologicalGender === '女') {
+                    options = [...(options.female || []), ...(options.common || [])];
+                } else if (biologicalGender === '男') {
+                    options = [...(options.male || []), ...(options.common || [])];
+                } else {
+                    options = [...(options.male || []), ...(options.female || []), ...(options.common || [])];
+                }
+            }
+            
+            if (!Array.isArray(options) || options.length === 0) {
+                console.warn('字段选项为空:', fieldName);
+                return;
+            }
+            
+            // 获取随机数量
+            const randomCount = config.randomCount || { min: 1, max: 1 };
+            const count = Math.floor(Math.random() * (randomCount.max - randomCount.min + 1)) + randomCount.min;
+            
+            // 随机选择选项
+            const shuffled = [...options].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, Math.min(count, options.length));
+            
+            // 清除当前选择
+            selectedOptions[fieldName] = [];
+            
+            // 应用选择
+            selected.forEach(option => {
+                selectedOptions[fieldName].push(option);
+            });
+            
+            // 更新按钮状态
+            updateOptionButtons(fieldName);
+        }
+        
+        // 重置所有选择
+        function resetAll() {
+            // 直接重置，无需确认
+            resetUserSelections();
+            
+            // 重新初始化选项组（因为性别被重置，需要显示所有选项）
+            initializeAllOptionSections();
+        }
+        
+        function randomizeAll() {
+            // 随机年龄（如果未填写）
+            if (!document.getElementById('age').value) {
+                document.getElementById('age').value = Math.floor(Math.random() * 50) + 18;
+            }
+            
+            // 检查生理性别是否已选择
+            const genderSelect = document.getElementById('biologicalGender');
+            let currentGender = genderSelect.value;
+            
+            // 如果未选择性别，则随机生成一个
+            if (!currentGender) {
+                const genders = ['女', '男', '扶她', '双性'];
+                currentGender = genders[Math.floor(Math.random() * genders.length)];
+                genderSelect.value = currentGender;
+            }
+            
+            // 随机身高体重（如果未填写）
+            if (!document.getElementById('height').value || !document.getElementById('weight').value) {
+                if (currentGender === '女') {
+                    // 女性身高体重范围
+                    if (!document.getElementById('height').value) {
+                        document.getElementById('height').value = Math.floor(Math.random() * 25) + 150; // 150-175cm
+                    }
+                    if (!document.getElementById('weight').value) {
+                        document.getElementById('weight').value = Math.floor(Math.random() * 30) + 40;  // 40-70kg
+                    }
+                } else if (currentGender === '男') {
+                    // 男性身高体重范围
+                    if (!document.getElementById('height').value) {
+                        document.getElementById('height').value = Math.floor(Math.random() * 30) + 165; // 165-195cm
+                    }
+                    if (!document.getElementById('weight').value) {
+                        document.getElementById('weight').value = Math.floor(Math.random() * 40) + 55;  // 55-95kg
+                    }
+                } else {
+                    // 其他性别随机范围
+                    if (!document.getElementById('height').value) {
+                        document.getElementById('height').value = Math.floor(Math.random() * 40) + 150; // 150-190cm
+                    }
+                    if (!document.getElementById('weight').value) {
+                        document.getElementById('weight').value = Math.floor(Math.random() * 50) + 40;  // 40-90kg
+                    }
+                }
+            }
+            
+            // 随机性取向（如果未选择）
+            const orientationSelect = document.getElementById('sexualOrientation');
+            if (!orientationSelect.value) {
+                const orientations = ['异性恋', '同性恋', '双性恋', '泛性恋'];
+                orientationSelect.value = orientations[Math.floor(Math.random() * orientations.length)];
+            }
+            
+            // 随机所有字段（只对未选择的字段进行随机）
+            const fieldsToRandomize = [
+                'positiveTraits', 'negativeTraits', 'loveViews', 'socialStyle', 
+                'face', 'body', 'hobbies', 'identity', 'accessories', 
+                'dressStyle', 'hairstyle', 'illness', 'specialTraits', 'bodyScent',
+                'kinks', 'sensitiveSpots', 'relationshipStatus', 'sensitivity', 
+                'libido', 'sexualHistory'
+            ];
+            
+            fieldsToRandomize.forEach(field => {
+                // 只有当该字段还没有选择任何选项时，才进行随机生成
+                if (!selectedOptions[field] || selectedOptions[field].length === 0) {
+                    randomizeFieldByGender(field);
+                }
+            });
+            
+            // 重新初始化性别特定的选项（确保界面显示正确的选项）
+            setTimeout(() => {
+                initializeAllOptionSections();
+                // 重新应用随机选择（用于性别特定字段）
+                fieldsToRandomize.forEach(field => {
+                    updateOptionButtons(field);
+                });
+            }, 100);
+        }
+        
+        // 生成确认
+        function confirmCreate() {
+            const name = document.getElementById('realName').value.trim();
+            if (!name) {
+                document.getElementById('realNameError').style.display = 'block';
+                document.getElementById('realName').focus();
+                return;
+            }
+            
+            document.getElementById('realNameError').style.display = 'none';
+            generateYamlData();
+        }
+        
+        // 生成YAML数据
+        function generateYamlData() {
+            const data = collectFormData();
+            
+            try {
+                const yamlString = jsyaml.dump(data, {
+                    indent: 2,
+                    lineWidth: -1,
+                    noRefs: true,
+                    sortKeys: false
+                });
+                showYamlModal(yamlString);
+            } catch (error) {
+                alert('生成YAML数据时出错：' + error.message);
+            }
+        }
+        
+        // 收集表单数据
+        function collectFormData() {
+            const world = WORLDS_CONFIG[currentWorld];
+            
+            return {
+                基本信息: {
+                    姓名: document.getElementById('realName').value.trim(),
+                    年龄: document.getElementById('age').value || '未设定',
+                    生理性别: document.getElementById('biologicalGender').value || '未设定',
+                    性取向: document.getElementById('sexualOrientation').value || '未设定',
+                    身高: document.getElementById('height').value ? document.getElementById('height').value + 'cm' : '未设定',
+                    体重: document.getElementById('weight').value ? document.getElementById('weight').value + 'kg' : '未设定'
+                },
+                性格特征: {
+                    正面特征: selectedOptions.positiveTraits || [],
+                    负面特征: selectedOptions.negativeTraits || [],
+                    恋爱观: selectedOptions.loveViews || [],
+                    社交风格: selectedOptions.socialStyle || []
+                },
+                外貌特征: {
+                    面部特征: selectedOptions.face || [],
+                    身材特征: selectedOptions.body || [],
+                    穿搭风格: selectedOptions.dressStyle || [],
+                    发型: selectedOptions.hairstyle || [],
+                    配饰: selectedOptions.accessories || [],
+                    体味: selectedOptions.bodyScent || []
+                },
+                个人信息: {
+                    兴趣爱好: selectedOptions.hobbies || [],
+                    身份职业: selectedOptions.identity || [],
+                    健康状况: selectedOptions.illness || [],
+                    特殊能力: selectedOptions.specialTraits || [],
+                    关系状态: selectedOptions.relationshipStatus || []
+                },
+                性相关特征: {
+                    性癖: selectedOptions.kinks || [],
+                    敏感点: selectedOptions.sensitiveSpots || [],
+                    身体敏感度: selectedOptions.sensitivity || [],
+                    性欲强度: selectedOptions.libido || [],
+                    性经验: selectedOptions.sexualHistory || []
+                }
+            };
+        }
+        
+        // 显示YAML模态窗口
+        function showYamlModal(yamlString) {
+            document.getElementById('yamlOutput').value = yamlString;
+            document.getElementById('yamlModal').style.display = 'block';
+        }
+        
+        // 关闭YAML模态窗口
+        function closeYamlModal() {
+            document.getElementById('yamlModal').style.display = 'none';
+        }
+        
+        // 显示自定义标签模态窗口
+        function showCustomLabelModal(fieldName) {
+            const fieldDisplayNames = {
+                'positiveTraits': '正面性格特征',
+                'negativeTraits': '负面性格特征',
+                'loveViews': '恋爱观',
+                'socialStyle': '社交风格',
+                'face': '面部特征',
+                'body': '身材特征',
+                'hobbies': '兴趣爱好',
+                'identity': '身份职业',
+                'dressStyle': '穿搭风格',
+                'hairstyle': '发型',
+                'accessories': '配饰',
+                'illness': '健康状况',
+                'specialTraits': '特殊能力',
+                'bodyScent': '体味',
+                'kinks': '性癖',
+                'sensitiveSpots': '敏感点',
+                'relationshipStatus': '关系状态',
+                'sensitivity': '身体敏感度',
+                'libido': '性欲强度',
+                'sexualHistory': '性经验'
+            };
+            
+            document.getElementById('customLabelFieldName').textContent = fieldDisplayNames[fieldName] || fieldName;
+            document.getElementById('customLabelInput').value = '';
+            document.getElementById('customLabelInput').setAttribute('data-field', fieldName);
+            document.getElementById('customLabelModal').style.display = 'block';
+            
+            // 聚焦到输入框
+            setTimeout(() => {
+                document.getElementById('customLabelInput').focus();
+            }, 100);
+        }
+        
+        // 关闭自定义标签模态窗口
+        function closeCustomLabelModal() {
+            document.getElementById('customLabelModal').style.display = 'none';
+        }
+        
+        // 处理自定义标签输入框的键盘事件
+        function handleCustomLabelKeyPress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                confirmCustomLabel();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                closeCustomLabelModal();
+            }
+        }
+        
+        // 确认添加自定义标签
+        function confirmCustomLabel() {
+            const input = document.getElementById('customLabelInput');
+            const customLabel = input.value.trim();
+            const fieldName = input.getAttribute('data-field');
+            
+            if (!customLabel) {
+                alert('请输入自定义标签内容');
+                return;
+            }
+            
+            if (customLabel.length > 50) {
+                alert('标签长度不能超过50个字符');
+                return;
+            }
+            
+            // 添加到对应的选项集合
+            if (!selectedOptions[fieldName].includes(customLabel)) {
+                selectedOptions[fieldName].push(customLabel);
+            }
+            
+            // 更新显示
+            updateSelectedItems(fieldName);
+            
+            // 在选项网格中临时添加这个自定义按钮
+            const container = document.getElementById(fieldName + 'Content');
+            if (container) {
+                const grid = container.querySelector('.options-grid') || container;
+                const customBtn = createOptionButton(customLabel, fieldName);
+                customBtn.classList.add('selected', 'custom-option'); // 标记为已选择和自定义选项
+                grid.appendChild(customBtn);
+            }
+            
+            // 关闭模态窗口
+            closeCustomLabelModal();
+            
+            // 提示用户
+            alert(`自定义标签 "${customLabel}" 已添加到 ${document.getElementById('customLabelFieldName').textContent}`);
+        }
+        
+        // 复制YAML到剪贴板
+        async function copyYamlToClipboard() {
+            const output = document.getElementById('yamlOutput');
+            const textToCopy = output.value.trim();
+            
+            if (!textToCopy) {
+                alert('没有可复制的YAML数据');
+                return;
+            }
+            
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textToCopy);
+                    alert('YAML数据已复制到剪贴板！');
+                } else {
+                    // 备用方法
+                    output.select();
+                    output.setSelectionRange(0, 99999);
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        alert('YAML数据已复制到剪贴板！');
+                    } else {
+                        throw new Error('复制失败');
+                    }
+                }
+            } catch (err) {
+                // 手动复制提示
+                output.focus();
+                output.select();
+                alert('自动复制失败，请手动复制。已为您选中文本，请按 Ctrl+C (Mac: Cmd+C)');
+            }
+        }
+        
+        // 应用世界主题
+        function applyWorldTheme(worldKey) {
+            const world = WORLDS_CONFIG[worldKey];
+            if (!world) return;
+            
+            const root = document.documentElement;
+            root.style.setProperty('--primary-color', world.color.primary);
+            root.style.setProperty('--secondary-color', world.color.secondary);
+            root.style.setProperty('--accent-color', world.color.accent);
+            root.style.setProperty('--background-gradient', world.color.background);
+            
+            // 更新背景装饰
+            const decorations = document.querySelectorAll('.bg-decoration, .star');
+            decorations.forEach((deco, index) => {
+                if (world.decorations && world.decorations.length > 0) {
+                    deco.textContent = world.decorations[index % world.decorations.length];
+                }
+            });
+        }
+        
+        // 返回按钮功能
+        function goBack() {
+            if (document.getElementById('character-generator-view').classList.contains('hidden')) {
+                // 当前在世界选择页面，返回浏览器历史
+                history.back();
+            } else {
+                // 当前在角色生成器页面，返回世界选择
+                showWorldSelection();
+            }
+        }
+
+        // 初始化世界背景选择页面
+        function initWorldsPage() {
+            const grid = document.getElementById('worldsGrid');
+            if (!grid) return;
+
+            // 清空现有内容
+            grid.innerHTML = '';
+
+            // 生成世界背景卡片
+            Object.keys(WORLDS_CONFIG).forEach(worldKey => {
+                const world = WORLDS_CONFIG[worldKey];
+                const card = createWorldCard(worldKey, world);
+                grid.appendChild(card);
+            });
+        }
+
+        // 创建世界背景卡片
+        function createWorldCard(worldKey, world) {
+            const card = document.createElement('div');
+            card.className = 'world-card';
+            card.style.setProperty('--world-gradient', world.color.background);
+
+            card.innerHTML = `
+                <span class="world-icon">${world.icon}</span>
+                <h3 class="world-name">${world.name}</h3>
+                <p class="world-description">${world.description}</p>
+                <div class="select-btn" onclick="event.stopPropagation(); showCharacterGenerator('${worldKey}')">
+                    进入 ${world.name}
+                </div>
+            `;
+
+            // 添加点击事件
+            card.addEventListener('click', function(e) {
+                // 如果点击的不是按钮，则触发按钮点击
+                if (!e.target.classList.contains('select-btn')) {
+                    showCharacterGenerator(worldKey);
+                }
+            });
+
+            return card;
+        }
+
+        // 动态更新背景装饰
+        function updateBackgroundDecorations() {
+            const decorations = document.querySelectorAll('.bg-decoration');
+            const allDecorations = ['✨', '⭐', '💫', '🌟', '🔮', '⚡', '🌙', '🌸'];
+            
+            decorations.forEach((deco, index) => {
+                const randomIcon = allDecorations[Math.floor(Math.random() * allDecorations.length)];
+                deco.textContent = randomIcon;
+            });
+        }
+
+        // 处理URL参数
+        function handleUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const worldParam = urlParams.get('world');
+            
+            if (worldParam && WORLDS_CONFIG[worldParam]) {
+                showCharacterGenerator(worldParam);
+            } else {
+                showWorldSelection();
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initWorldsPage();
+            handleUrlParameters();
+            
+            // 名称字段验证
+            document.getElementById('realName').addEventListener('input', function() {
+                const error = document.getElementById('realNameError');
+                if (this.value.trim()) {
+                    error.style.display = 'none';
+                }
+            });
+            
+            // 性别选择变化时更新选项
+            document.getElementById('biologicalGender').addEventListener('change', function() {
+                initializeAllOptionSections();
+            });
+            
+            // 每10秒更新一次背景装饰
+            setInterval(updateBackgroundDecorations, 10000);
+        });
+
+        // 处理浏览器前进后退
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.world) {
+                showCharacterGenerator(event.state.world);
+            } else {
+                showWorldSelection();
+            }
+        });
+
+        // 点击模态窗口外部关闭
+        window.addEventListener('click', function(event) {
+            const yamlModal = document.getElementById('yamlModal');
+            const customLabelModal = document.getElementById('customLabelModal');
+            
+            if (event.target === yamlModal) {
+                closeYamlModal();
+            }
+            if (event.target === customLabelModal) {
+                closeCustomLabelModal();
+            }
+        });
+    </script>
+</body>
+</html>
